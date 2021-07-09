@@ -1,0 +1,65 @@
+---
+title: "HW1_Macro-finance"
+author: "Shayan Abbasi"
+date: "4/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Cleaning the environment
+
+First of all we clear the environment and install and load the libraries:
+
+```{r}
+rm(list = ls()) 
+rm(list = ls(all.names = TRUE))
+```
+
+## Check Libraries
+
+```{r}
+if (!require('plotly')) install.packages('plotly'); library(plotly)
+if (!require("dplyr")) install.packages("dplyr"); library(dplyr)
+if (!require("knitr")) install.packages("knitr"); library(knitr)
+if (!require("readxl")) install.packages("readxl"); library(readxl)
+```
+
+More insight on the data: https://www.macrohistory.net/app/download/9834516469/RORE_documentation.pdf?t=1614633099
+
+#Import Data
+```{r}
+data <- read_excel("JSTdatasetR5.xlsx", sheet = "Data")
+data
+```
+
+#Crisis: 
+
+
+#Real stock price index
+
+
+
+#Real house price index
+
+
+
+#Real GDP index
+
+
+
+
+
+
+
+
+
+
+
+#Citation
+  1. Òscar Jordà, Katharina Knoll, Dmitry Kuvshinov, Moritz Schularick, and Alan M. Taylor. 2019. “The Rate of Return on Everything, 1870–2015.” Quarterly Journal of Economics, 134(3), 1225-1298.
+  [Source Data] https://www.macrohistory.net/database/

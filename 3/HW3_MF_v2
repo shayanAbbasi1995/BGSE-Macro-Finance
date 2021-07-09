@@ -1,0 +1,90 @@
+---
+title: "HW3_MacroFinance"
+author: "Shayan Abbasi, Lino Vitale"
+date: "5/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#House Keeping
+```{r}
+library('readxl')
+library('tidyverse')
+rm(list=ls())
+```
+
+#Import Data
+```{r}
+data <- filter(read_excel('/Users/linovitale/Library/Mobile Documents/com~apple~CloudDocs/Macro-Finance/Homeworks/HW2/JSTdatasetR5.xlsx', sheet = 'Data'), country == 'Australia')
+interval <- 1:146 #Last 2 year don't have data for all the variables
+```
+
+#Calculate Price index
+```{r}
+index_len <- length(interval)
+Price_index <- vector(mode='numeric', length = index_len)
+Price_index[1] <- 1
+for(i in 2:index_len){
+  if(is.na(data$eq_capgain[i])){ #wont do any good since the other variables miss the last two values.
+    data$eq_capgain[i] <- data$eq_capgain[i-1]
+  }
+  Price_index[i] <- Price_index[i-1]*(1+data$eq_capgain[i])
+}
+
+```
+
+
+#Nominal Dividend index & Real dividend index & real dividend growth & inflation & real return
+```{r}
+div_index <- Price_index*data$eq_dp[interval]
+real_div_index <- div_index/data$cpi[interval]
+real_div_g <- (real_div_index[2:index_len]-real_div_index[1:index_len-1])/real_div_index[1:index_len-1]
+inf <- (data$cpi[2:index_len]-data$cpi[1:index_len-1])/data$cpi[1:index_len-1]
+real_return <- ((1+data$eq_tr[2:index_len])/(1+inf))-1
+```
+
+#Regress rt+1 on eq_dpt
+```{r}
+ols1 <- lm(real_return[1:145] ~ data$eq_dp[1:145]) #real return starts at t=2 to t=146 but data$eq_dp starts at t=1 to t=146, so we regress real return of year t to dp year t-1
+summary(ols1)
+```
+Dividend price ratio has a significant impact on returns, so the latter are predictable. An increase of one unit in the dividend price ratio leads to an increase of approximately 3.94 in the following period real return.
+
+#Regress gt+1 on eq_dpt
+```{r}
+ols2 <- lm(real_div_g[1:145] ~ data$eq_dp[1:145])
+summary(ols2)
+```
+
+Real dividend growth cannot be predicted from previous period dividend price ratio as the coefficient is statistically not significant.
+
+#bonuses / alternatives
+```{r}
+G <- (data$eq_dp[2:146]*(1/data$eq_dp[1:145])*(1+data$eq_capgain[2:146]))-1 #we can eliminate the -1 part as well, then we don't have to do +1 after
+r <- log(1+real_return)
+g <- log(1+G)
+dp <- log(data$eq_dp[interval])
+```
+
+
+#Regress rt+1 on eq_dpt (Alternative)
+```{r}
+ols1_2 <- lm(r ~ dp[1:145])
+summary(ols1_2)
+```
+
+As it was before, returns are predictable as the coefficient of log of the dividend price ratio is significant. An increase of 10% in the dividend price ratio in t leads to an increase of 20% in real return. Overall, also the R-squared increases as compared to the level case.
+
+#Regress gt+1 on eq_dpt (Alternative)
+```{r}
+ols2 <- lm(g[1:145] ~ data$eq_dp[1:145])
+summary(ols2)
+```
+
+Even in log terms dividend growth is not predictable as the coefficient of the covariate is not significant.
+
+
+

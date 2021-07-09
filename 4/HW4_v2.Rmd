@@ -1,0 +1,68 @@
+---
+title: "HW4_MacroFinance"
+author: "Shayan Abbasi, Lino Vitale"
+date: "13/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#House Keeping
+```{r}
+library('readxl')
+library('tidyverse')
+rm(list=ls())
+```
+
+#Import Data
+```{r}
+data <- filter(read_excel('/Users/linovitale/Library/Mobile Documents/com~apple~CloudDocs/Macro-Finance/Homeworks/HW4/JSTdatasetR5.xlsx', sheet = 'Data'))
+```
+
+
+```{r}
+dt <- data %>% 
+  filter(year>=1870 & year<=2015) %>% 
+  group_by(country) %>% 
+  mutate(
+    rhs_gdpgrowth = (rgdppc-lag(rgdppc))/lag(rgdppc),
+    CumGDPGrowth_t = (rgdppc-lag(rgdppc))/lag(rgdppc),
+    CumGDPGrowth_t1 = (lead(rgdppc)-lag(rgdppc))/lag(rgdppc),
+    CumGDPGrowth_t2 = (lead(rgdppc,n=2)-lag(rgdppc))/lag(rgdppc)) %>%
+  mutate(
+      inflation = (cpi - lag(cpi)) / lag(cpi),
+      cy = ca / gdp
+    ) %>% 
+  ungroup() %>% 
+  select(year,country,contains('CumGDPGrowth'), inflation, cy, iy, stir, ltrate, crisisJST,rhs_gdpgrowth)
+```
+
+```{r}
+print(dt)
+```
+
+```{r}
+# data %>% 
+#   select(year,country,crisisJST) %>% 
+#   filter(crisisJST==1) %>% 
+#   pivot_wider(id_cols = country, names_from = year, values_from= crisisJST) %>% 
+#   summarise(across(where(is.numeric),sum,na.rm=T))
+```
+
+```{r}
+reg_list = list(
+  reg0 = select(dt, -c(CumGDPGrowth_t1,CumGDPGrowth_t2)) %>% rename(cumgdpgrowth=CumGDPGrowth_t), 
+  reg1 = select(dt, -c(CumGDPGrowth_t,CumGDPGrowth_t2)) %>% rename(cumgdpgrowth=CumGDPGrowth_t1),
+  reg2 = select(dt, -c(CumGDPGrowth_t,CumGDPGrowth_t1)) %>% rename(cumgdpgrowth=CumGDPGrowth_t2)
+) 
+```
+
+
+```{r}
+reg_list %>% 
+map(function(df) plm::plm(cumgdpgrowth ~ lag(inflation) + lag(stir) + lag(ltrate) + lag(cy) + lag(iy) + lag(rhs_gdpgrowth) + crisisJST , index="country", model="within", data=df)) %>% 
+  map(summary)
+```
+
